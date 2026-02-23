@@ -1,0 +1,16 @@
+{
+  "name": "@pkg/ui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "packageManager": "pnpm@10.30.1",
+  "dependencies": {
+    "@pkg/types": "workspace:*",
+    "nativewind": "^4.2.2",
+    "react": "^19.2.4",
+    "react-native": "^0.84.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.2.1"
+  }
+}
