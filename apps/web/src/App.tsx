@@ -1,35 +1,58 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { supabase, useAuthStore } from "@pkg/core";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
 
-function App() {
-  const [count, setCount] = useState(0)
 
+export default function App() {
+    const { session, setSession, isLoading } = useAuthStore()
+
+    useEffect(() => {
+            // Get session
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                setSession(session)
+            })
+
+            // Listen for auth changes
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(
+                (_e, session) => setSession(session)
+            )
+
+            return () => subscription.unsubscribe()
+    }, [])
+
+    if (isLoading) return <SplashScreen />
+
+    return (
+        <BrowserRouter>
+            <Routes>
+                {!session ? (
+                    <>
+                        <Route path="/login" element={ <Login/> } />
+                    </>
+                ) : (
+                        <>
+                            <Route path="*" element={<Navigate to={"/todos"} replace />} />
+                            <Route path="/auth/callback" element={<AuthCallback/>}/>
+                        </>
+                )}
+            </Routes>
+        </BrowserRouter>
+    )
+}
+
+function SplashScreen() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="flex items-center justify-center min-h-screen bg-white">
+      <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+    </div>
   )
 }
 
-export default App
+function AuthCallback() {
+  useEffect(() => {
+    supabase.auth.exchangeCodeForSession(window.location.href)
+  }, [])
+
+  return <SplashScreen />
+}
